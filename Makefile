@@ -1,3 +1,5 @@
+PREFIX = /usr/local
+
 csrc = $(wildcard src/*.c src/vmath/*.c src/image/*.c)
 ccsrc = $(wildcard src/*.cc src/vmath/*.cc src/image/*.cc)
 obj = $(ccsrc:.cc=.o) $(csrc:.c=.o)
@@ -24,3 +26,11 @@ $(bin): $(obj)
 .PHONY: clean
 clean:
 	rm -f $(obj) $(bin)
+
+.PHONY: install
+install:
+	install -m 755 $(bin) $(PREFIX)/bin/$(bin)
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(PREFIX)/bin/$(bin)
