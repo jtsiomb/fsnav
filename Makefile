@@ -7,10 +7,14 @@ bin = fsnav
 
 inc = -Isrc -Isrc/vmath -Isrc/image
 
+ifeq ($(shell uname -s), CYGWIN_NT-5.1)
+	inc += -I/usr/include/opengl
+endif
+
 CC = gcc
 CXX = g++
-CFLAGS = -pedantic -Wall -g -O3 $(inc) `pkg-config --cflags freetype2`
-CXXFLAGS = -pedantic -Wall -g -O3 $(inc)
+CFLAGS = -pedantic -Wall -g -O3 $(inc) $(def) `pkg-config --cflags freetype2`
+CXXFLAGS = -pedantic -Wall -g -O3 $(inc) $(def)
 LDFLAGS = $(libgl_$(shell uname -s)) `pkg-config --libs freetype2` -lpng -ljpeg -lm
 
 libgl_UNIX = -lGL -lGLU -lglut

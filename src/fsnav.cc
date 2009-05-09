@@ -14,6 +14,10 @@
 #include "vis.h"
 #include "image.h"
 
+#ifndef GL_BGRA
+#define GL_BGRA		0x80e1
+#endif
+
 void disp();
 Ray calc_mouse_ray(int x, int y);
 void reshape(int x, int y);
