@@ -98,9 +98,11 @@ public:
 
 	void set_uid(int uid);
 	int get_uid() const;
+	const char *get_user() const;
 
 	void set_gid(int gid);
 	int get_gid() const;
+	const char *get_group() const;
 
 	void set_time(int which, time_t t);
 	time_t get_time(int which) const;

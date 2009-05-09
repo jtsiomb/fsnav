@@ -12,27 +12,35 @@
 #include "fstree.h"
 #include "text.h"
 #include "vis.h"
+#include "image.h"
 
 void disp();
 Ray calc_mouse_ray(int x, int y);
 void reshape(int x, int y);
 void keyb(unsigned char key, int x, int y);
+void keyb_up(unsigned char key, int x, int y);
 void mouse(int bn, int state, int x, int y);
 void motion(int x, int y);
 void passive_motion(int x, int y);
 void double_click(int x, int y);
+unsigned int load_texture(const char *fname);
 
 static float cam_theta = 0, cam_phi = 25, cam_dist = 5;
 static float cam_y = 0;
 static Vector3 cam_from, cam_targ;
 static unsigned int cam_motion_start;
 
+static float mouse_x, mouse_y;
 static Ray mouse_ray;
 
 static Dir *root;
-static unsigned int font;
-
 static int xsz, ysz;
+
+static FSNode *clicked_node;
+static bool hover_file_info;
+
+unsigned int fontrm, fonttt, fonttt_sm;
+unsigned int scope_tex;
 
 int main(int argc, char **argv)
 {
@@ -46,6 +54,7 @@ int main(int argc, char **argv)
 	glutDisplayFunc(disp);
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(keyb);
+	glutKeyboardUpFunc(keyb_up);
 	glutMouseFunc(mouse);
 	glutMotionFunc(motion);
 	glutPassiveMotionFunc(passive_motion);
@@ -74,12 +83,32 @@ int main(int argc, char **argv)
 	}
 	root->layout();
 
-	if(!(font = create_font("data/kerkis.pfb", 32))) {
+	if(!(fontrm = create_font("data/kerkis.pfb", 32))) {
 		return 1;
 	}
-	bind_font(font);
+	bind_font(fontrm);
+	set_text_color(0.95, 0.9, 0.8, 1.0);
+
+	if(!(fonttt = create_font("data/courbd.ttf", 16))) {
+		return 1;
+	}
+	bind_font(fonttt);
 	set_text_color(1.0, 1.0, 1.0, 1.0);
-	set_text_mode(TEXT_MODE_3D);
+
+	if(!(fonttt_sm = create_font("data/courbd.ttf", 14))) {
+		return 1;
+	}
+	bind_font(fonttt_sm);
+	set_text_color(1.0, 1.0, 1.0, 1.0);
+
+	unsigned int font_texid = get_font_texture();
+	glBindTexture(GL_TEXTURE_2D, font_texid);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	if(!(scope_tex = load_texture("data/scope.png"))) {
+		return 1;
+	}
 
 	glEnable(GL_NORMALIZE);
 
@@ -103,7 +132,7 @@ void disp()
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0, -cam_y, -cam_dist);
+	glTranslatef(0, 0, -cam_dist);
 	glRotatef(cam_phi, 1, 0, 0);
 	glRotatef(cam_theta, 0, 1, 0);
 	glTranslatef(-cam_pos.x, -cam_pos.y, -cam_pos.z);
@@ -113,19 +142,16 @@ void disp()
 	draw_env();
 	root->draw();
 
-	/*
-	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_LIGHTING);
-	glBegin(GL_LINES);
-	Vector3 v0 = mouse_ray.origin;
-	Vector3 v1 = mouse_ray.origin + mouse_ray.dir * 0.1;
+	FSNode *sel = get_selection();
+	if((sel && hover_file_info) || clicked_node) {
+		if(!hover_file_info) {
+			sel = clicked_node;
+		}
 
-	glColor3f(1, 0, 0);
-	glVertex3f(v0.x, v0.y, v0.z);
-	glVertex3f(v1.x, v1.y, v1.z);
-	glEnd();
-	glPopAttrib();
-	*/
+		if(dynamic_cast<File*>(sel)) {
+			draw_file_stats((File*)sel);
+		}
+	}
 
 	glutSwapBuffers();
 	assert(glGetError() == GL_NO_ERROR);
@@ -165,7 +191,7 @@ void reshape(int x, int y)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(50.0, (float)x / (float)y, 1.0, 1000.0);
+	gluPerspective(50.0, (float)x / (float)y, 0.25, 500.0);
 }
 
 void keyb(unsigned char key, int x, int y)
@@ -174,8 +200,22 @@ void keyb(unsigned char key, int x, int y)
 	case 27:
 		exit(0);
 
+	case ' ':
+		hover_file_info = true;
+		clicked_node = 0;
+		glutPostRedisplay();
+		break;
+
 	default:
 		break;
+	}
+}
+
+void keyb_up(unsigned char key, int x, int y)
+{
+	if(key == ' ') {
+		hover_file_info = false;
+		glutPostRedisplay();
 	}
 }
 
@@ -217,6 +257,13 @@ void mouse(int bn, int state, int x, int y)
 			prev_y = y;
 		}
 	} else {
+		if(bn == GLUT_LEFT_BUTTON) {
+			if(x == prev_left_x && y == prev_left_y) {
+				clicked_node = get_selection();
+				glutPostRedisplay();
+			}
+		}
+
 		prev_x = -1;
 	}
 }
@@ -227,7 +274,7 @@ void motion(int x, int y)
 		cam_theta += (x - prev_x) * 0.5;
 		cam_phi += (y - prev_y) * 0.5;
 
-		if(cam_phi < -90) cam_phi = -90;
+		if(cam_phi < 5) cam_phi = 5;
 		if(cam_phi > 90) cam_phi = 90;
 
 		glutPostRedisplay();
@@ -249,8 +296,15 @@ void motion(int x, int y)
 
 void passive_motion(int x, int y)
 {
+	mouse_x = (float)x / (float)xsz;
+	mouse_y = (float)y / (float)ysz;
+
 	mouse_ray = calc_mouse_ray(x, ysz - y);
 	if(root->pick(mouse_ray)) {
+		glutPostRedisplay();
+	}
+
+	if(hover_file_info) {
 		glutPostRedisplay();
 	}
 }
@@ -265,4 +319,27 @@ void double_click(int x, int y)
 		cam_motion_start = glutGet(GLUT_ELAPSED_TIME);
 		glutPostRedisplay();
 	}
+}
+
+unsigned int load_texture(const char *fname)
+{
+	void *img;
+	int width, height;
+	unsigned int tex;
+
+	if(!(img = load_image(fname, &width, &height))) {
+		fprintf(stderr, "failed to load image: %s\n", fname);
+		return 0;
+	}
+
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, img);
+
+	free_image(img);
+	return tex;
 }

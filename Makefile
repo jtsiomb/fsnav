@@ -1,13 +1,15 @@
-csrc = $(wildcard src/*.c)
-ccsrc = $(wildcard src/*.cc)
+csrc = $(wildcard src/*.c src/vmath/*.c src/image/*.c)
+ccsrc = $(wildcard src/*.cc src/vmath/*.cc src/image/*.cc)
 obj = $(ccsrc:.cc=.o) $(csrc:.c=.o)
 bin = fsnav
 
+inc = -Isrc -Isrc/vmath -Isrc/image
+
 CC = gcc
 CXX = g++
-CFLAGS = -pedantic -Wall -g -O3 `pkg-config --cflags vmath freetype2`
-CXXFLAGS = -pedantic -Wall -g -O3 `pkg-config --cflags vmath`
-LDFLAGS = $(libgl_$(shell uname -s)) `pkg-config --libs vmath freetype2` -lm
+CFLAGS = -pedantic -Wall -g -O3 $(inc) `pkg-config --cflags freetype2`
+CXXFLAGS = -pedantic -Wall -g -O3 $(inc)
+LDFLAGS = $(libgl_$(shell uname -s)) `pkg-config --libs freetype2` -lpng -ljpeg -lm
 
 libgl_UNIX = -lGL -lGLU -lglut
 libgl_Linux = $(libgl_UNIX)

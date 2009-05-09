@@ -11,6 +11,8 @@ unsigned int create_font(const char *fname, int font_size);
 void delete_font(unsigned int fid);
 int bind_font(unsigned int fid);
 
+unsigned int get_font_texture(void);
+
 enum {
 	TEXT_MODE_2D,
 	TEXT_MODE_3D

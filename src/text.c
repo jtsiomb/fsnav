@@ -243,6 +243,11 @@ int bind_font(unsigned int fid)
 	return 0;
 }
 
+unsigned int get_font_texture(void)
+{
+	return act_fnt->tex_id;
+}
+
 void set_text_mode(unsigned int text_mode)
 {
 	tmode = text_mode;

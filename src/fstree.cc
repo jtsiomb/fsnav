@@ -4,6 +4,8 @@
 #include <float.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <pwd.h>
+#include <grp.h>
 #include <sys/stat.h>
 #include "fstree.h"
 #include "vis.h"
@@ -296,6 +298,15 @@ int File::get_uid() const
 	return uid;
 }
 
+const char *File::get_user() const
+{
+	struct passwd *pw = getpwuid(uid);
+	if(pw) {
+		return pw->pw_name;
+	}
+	return "unknown";
+}
+
 void File::set_gid(int gid)
 {
 	this->gid = gid;
@@ -304,6 +315,15 @@ void File::set_gid(int gid)
 int File::get_gid() const
 {
 	return gid;
+}
+
+const char *File::get_group() const
+{
+	struct group *gr = getgrgid(gid);
+	if(gr) {
+		return gr->gr_name;
+	}
+	return "unknown";
 }
 
 void File::set_time(int which, time_t t)
