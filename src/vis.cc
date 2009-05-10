@@ -90,7 +90,8 @@ void draw_link(const Link *link)
 
 	glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT);
 	glDisable(GL_LIGHTING);
-	glLineWidth(link->selected ? 2.0 : 1.0);
+	glEnable(GL_BLEND);
+	glLineWidth(2.0);//link->selected ? 2.0 : 1.0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();

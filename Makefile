@@ -13,8 +13,8 @@ endif
 
 CC = gcc
 CXX = g++
-CFLAGS = -pedantic -Wall -g -O3 $(inc) $(def) `pkg-config --cflags freetype2`
-CXXFLAGS = -pedantic -Wall -g -O3 $(inc) $(def)
+CFLAGS = -pedantic -Wall -g -O3 $(inc) $(def) -DPREFIX=\"$(PREFIX)\" `pkg-config --cflags freetype2`
+CXXFLAGS = -pedantic -Wall -g -O3 $(inc) $(def) -DPREFIX=\"$(PREFIX)\"
 LDFLAGS = $(libgl_$(shell uname -s)) `pkg-config --libs freetype2` -lpng -ljpeg -lm
 
 libgl_UNIX = -lGL -lGLU -lglut
@@ -34,7 +34,11 @@ clean:
 .PHONY: install
 install:
 	install -m 755 $(bin) $(PREFIX)/bin/$(bin)
+	install -d $(PREFIX)/share/fsnav
+	install -m 644 data/* $(PREFIX)/share/fsnav/
 
 .PHONY: uninstall
 uninstall:
 	rm -f $(PREFIX)/bin/$(bin)
+	rm -f $(PREFIX)/share/fsnav/*
+	rmdir $(PREFIX)/share/fsnav

@@ -73,8 +73,6 @@ bool build_tree(Dir *tree, const char *dirname)
 				continue;
 			}
 
-			printf("found dir: %s\n", dent->d_name);
-
 			Dir *node = new Dir;
 			tree->add_subdir(node);
 

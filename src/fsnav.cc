@@ -19,6 +19,11 @@
 #define GL_BGRA		0x80e1
 #endif
 
+#ifndef PREFIX
+#define PREFIX	"/usr/local"
+#endif
+
+const char *find_data_file(const char *fname);
 void disp();
 Ray calc_mouse_ray(int x, int y);
 void reshape(int x, int y);
@@ -88,19 +93,19 @@ int main(int argc, char **argv)
 	}
 	root->layout();
 
-	if(!(fontrm = create_font("data/kerkis.pfb", 32))) {
+	if(!(fontrm = create_font(find_data_file("kerkis.pfb"), 32))) {
 		return 1;
 	}
 	bind_font(fontrm);
 	set_text_color(0.95, 0.9, 0.8, 1.0);
 
-	if(!(fonttt = create_font("data/courbd.ttf", 16))) {
+	if(!(fonttt = create_font(find_data_file("courbd.ttf"), 16))) {
 		return 1;
 	}
 	bind_font(fonttt);
 	set_text_color(1.0, 1.0, 1.0, 1.0);
 
-	if(!(fonttt_sm = create_font("data/courbd.ttf", 14))) {
+	if(!(fonttt_sm = create_font(find_data_file("courbd.ttf"), 14))) {
 		return 1;
 	}
 	bind_font(fonttt_sm);
@@ -111,14 +116,37 @@ int main(int argc, char **argv)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	if(!(scope_tex = load_texture("data/scope.png"))) {
+	if(!(scope_tex = load_texture(find_data_file("scope.png")))) {
 		return 1;
 	}
 
 	glEnable(GL_NORMALIZE);
+	glEnable(GL_LINE_SMOOTH);
 
 	glutMainLoop();
 	return 0;
+}
+
+const char *find_data_file(const char *fname)
+{
+	static char buf[2048];
+	const char *dirs[] = {
+		PREFIX "/share/fsnav",
+		"/usr/local/share/fsnav",
+		"/usr/share/fsnav",
+		"data",
+		0
+	};
+
+	for(int i=0; dirs[i]; i++) {
+		FILE *fp;
+		sprintf(buf, "%s/%s", dirs[i], fname);
+		if((fp = fopen(buf, "rb"))) {
+			fclose(fp);
+			return buf;
+		}
+	}
+	return fname;
 }
 
 #define TRANS_TIME	0.8
@@ -196,7 +224,7 @@ void reshape(int x, int y)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(50.0, (float)x / (float)y, 0.25, 500.0);
+	gluPerspective(50.0, (float)x / (float)y, 0.5, 500.0);
 }
 
 void keyb(unsigned char key, int x, int y)
