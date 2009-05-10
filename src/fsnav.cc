@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #include "fstree.h"
 
 #if defined(__APPLE__) && defined(__MACH__)

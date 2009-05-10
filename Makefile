@@ -5,7 +5,7 @@ ccsrc = $(wildcard src/*.cc src/vmath/*.cc src/image/*.cc)
 obj = $(ccsrc:.cc=.o) $(csrc:.c=.o)
 bin = fsnav
 
-inc = -Isrc -Isrc/vmath -Isrc/image
+inc = -Isrc -Isrc/vmath -Isrc/image -I/usr/local/include
 
 ifeq ($(shell uname -s), CYGWIN_NT-5.1)
 	inc += -I/usr/include/opengl
