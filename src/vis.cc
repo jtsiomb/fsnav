@@ -66,8 +66,9 @@ void draw_node_text(const FSNode *node)
 
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
+		glTranslatef(0, 0, 0.1);
 		glTranslatef(tpos.x, tpos.y + 0.01, tpos.z + get_line_advance() / 2.0);
-		glRotatef(-60, 1, 0, 0);
+		glRotatef(-50, 1, 0, 0);
 
 		bind_font(fontrm);
 		set_text_mode(TEXT_MODE_3D);

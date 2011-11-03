@@ -14,6 +14,7 @@
 #include "text.h"
 #include "vis.h"
 #include "image.h"
+#include "stereo.h"
 
 #ifndef GL_BGRA
 #define GL_BGRA		0x80e1
@@ -25,6 +26,7 @@
 
 const char *find_data_file(const char *fname);
 void disp();
+void render();
 Ray calc_mouse_ray(int x, int y);
 void reshape(int x, int y);
 void keyb(unsigned char key, int x, int y);
@@ -34,6 +36,7 @@ void motion(int x, int y);
 void passive_motion(int x, int y);
 void double_click(int x, int y);
 unsigned int load_texture(const char *fname);
+int parse_args(int argc, char **argv);
 
 static float cam_theta = 0, cam_phi = 25, cam_dist = 5;
 static float cam_y = 0;
@@ -52,14 +55,20 @@ static bool hover_file_info;
 unsigned int fontrm, fonttt, fonttt_sm;
 unsigned int scope_tex;
 
+static char *root_dirname;
+static int stereo;
+
 int main(int argc, char **argv)
 {
-	char *root_dirname = ".";
-
 	glutInitWindowSize(800, 600);
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
-	glutCreateWindow("Filesystem Visualizer");
+
+	if(parse_args(argc, argv) == -1) {
+		return 1;
+	}
+
+	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE | (stereo ? GLUT_STEREO : 0));
+	glutCreateWindow("filesystem visualizer");
 
 	glutDisplayFunc(disp);
 	glutReshapeFunc(reshape);
@@ -74,14 +83,10 @@ int main(int argc, char **argv)
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 
-	if(argc > 1) {
-		root_dirname = argv[1];
-	}
-
 	set_layout_param(LP_FILE_SIZE, 0.5);
 	set_layout_param(LP_FILE_SPACING, 0.1);
 	set_layout_param(LP_FILE_HEIGHT, 0.1);
-	
+
 	set_layout_param(LP_DIR_SIZE, 0.5 + 0.2);
 	set_layout_param(LP_DIR_SPACING, 0.5);
 	set_layout_param(LP_DIR_HEIGHT, 0.1);
@@ -123,6 +128,8 @@ int main(int argc, char **argv)
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_LINE_SMOOTH);
 
+	stereo_focus_dist(4.0);
+
 	glutMainLoop();
 	return 0;
 }
@@ -153,7 +160,6 @@ const char *find_data_file(const char *fname)
 void disp()
 {
 	unsigned int msec = glutGet(GLUT_ELAPSED_TIME);
-	float lpos[] = {-0.5, 1, 0.5, 0};
 
 	float t = (msec - cam_motion_start) / 1000.0 / TRANS_TIME;
 	if(t > 1.0) {
@@ -161,15 +167,57 @@ void disp()
 	}
 	Vector3 cam_pos = lerp(cam_from, cam_targ, t);
 
+	if(stereo) {
+		glDrawBuffer(GL_BACK_LEFT);
+	}
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	stereo_proj_matrix(stereo ? VIEW_LEFT : VIEW_CENTER);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+	stereo_view_matrix(stereo ? VIEW_LEFT : VIEW_CENTER);
 	glTranslatef(0, 0, -cam_dist);
 	glRotatef(cam_phi, 1, 0, 0);
 	glRotatef(cam_theta, 0, 1, 0);
 	glTranslatef(-cam_pos.x, -cam_pos.y, -cam_pos.z);
 
+	render();
+
+	if(stereo) {
+		glDrawBuffer(GL_BACK_RIGHT);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		stereo_proj_matrix(VIEW_RIGHT);
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		stereo_view_matrix(VIEW_RIGHT);
+		glTranslatef(0, 0, -cam_dist);
+		glRotatef(cam_phi, 1, 0, 0);
+		glRotatef(cam_theta, 0, 1, 0);
+		glTranslatef(-cam_pos.x, -cam_pos.y, -cam_pos.z);
+
+		render();
+	}
+
+	glutSwapBuffers();
+	assert(glGetError() == GL_NO_ERROR);
+
+	if(t < 1.0) {
+		glutPostRedisplay();
+	}
+}
+
+void render()
+{
+	float lpos[] = {-0.5, 1, 0.5, 0};
 	glLightfv(GL_LIGHT0, GL_POSITION, lpos);
 
 	draw_env();
@@ -184,13 +232,6 @@ void disp()
 		if(dynamic_cast<File*>(sel)) {
 			draw_file_stats((File*)sel);
 		}
-	}
-
-	glutSwapBuffers();
-	assert(glGetError() == GL_NO_ERROR);
-
-	if(t < 1.0) {
-		glutPostRedisplay();
 	}
 }
 
@@ -222,9 +263,11 @@ void reshape(int x, int y)
 	ysz = y;
 	glViewport(0, 0, x, y);
 
-	glMatrixMode(GL_PROJECTION);
+	/*glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(50.0, (float)x / (float)y, 0.5, 500.0);
+	gluPerspective(50.0, (float)x / (float)y, 0.5, 500.0);*/
+
+	stereo_proj_param(50.0, (float)x / (float)y, 0.5, 500.0);
 }
 
 void keyb(unsigned char key, int x, int y)
@@ -375,4 +418,34 @@ unsigned int load_texture(const char *fname)
 
 	free_image(img);
 	return tex;
+}
+
+int parse_args(int argc, char **argv)
+{
+	int i;
+
+	for(i=1; i<argc; i++) {
+		if(argv[i][0] == '-' && argv[i][2] == 0) {
+			switch(argv[i][1]) {
+			case 's':
+				stereo = !stereo;
+				break;
+
+			default:
+				fprintf(stderr, "invalid option: %s\n", argv[i]);
+				return -1;
+			}
+		} else {
+			if(root_dirname) {
+				fprintf(stderr, "unexpected argument: %s\n", argv[i]);
+				return -1;
+			}
+			root_dirname = argv[i];
+		}
+	}
+
+	if(!root_dirname) {
+		root_dirname = ".";
+	}
+	return 0;
 }
