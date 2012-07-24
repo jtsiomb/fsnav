@@ -110,16 +110,6 @@ void draw_link(const Link *link)
 
 static void draw_cube(float sz)
 {
-	static int dlist;
-
-	if(dlist) {
-		glCallList(dlist);
-		return;
-	}
-
-	dlist = glGenLists(1);
-	glNewList(dlist, GL_COMPILE_AND_EXECUTE);
-
 	float hsz = sz * 0.5f;
 
 	glBegin(GL_QUADS);
@@ -160,8 +150,6 @@ static void draw_cube(float sz)
 	glTexCoord2f(1, 0); glVertex3f(hsz, hsz, hsz);
 	glTexCoord2f(0, 0); glVertex3f(-hsz, hsz, hsz);
 	glEnd();
-
-	glEndList();
 }
 
 void draw_file_stats(const File *file)

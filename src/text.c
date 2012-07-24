@@ -22,10 +22,6 @@
 #include FT_FREETYPE_H
 #include "text.h"
 
-#ifndef GL_BGRA
-#define GL_BGRA                           0x80E1
-#endif
-
 #ifndef GL_TEXTURE_MAX_ANISOTROPY_EXT
 #define GL_TEXTURE_MAX_ANISOTROPY_EXT		0x84FE
 #endif
@@ -217,8 +213,8 @@ unsigned int create_font(const char *fname, int font_size)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_aniso);
 	}
 
-	/*glTexImage2D(GL_TEXTURE_2D, 0, 4, tex_xsz, tex_ysz, 0, GL_BGRA, GL_UNSIGNED_BYTE, img);*/
-	gluBuild2DMipmaps(GL_TEXTURE_2D, 4, tex_xsz, tex_ysz, GL_BGRA, GL_UNSIGNED_BYTE, img);
+	/*glTexImage2D(GL_TEXTURE_2D, 0, 4, tex_xsz, tex_ysz, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);*/
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 4, tex_xsz, tex_ysz, GL_RGBA, GL_UNSIGNED_BYTE, img);
 	free(img);
 
 	fonts[idx] = fnt;
@@ -465,7 +461,7 @@ void print_string_lines(const char **str, int lines)
 static void blit_font_glyph(struct font *fnt, int x, int y, FT_GlyphSlot glyph, unsigned int *img, int xsz, int ysz)
 {
 	int i, j;
-	unsigned int *dest;
+	unsigned char *dest;
 	unsigned char *src;
 
 	if(glyph->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY) {
@@ -478,9 +474,12 @@ static void blit_font_glyph(struct font *fnt, int x, int y, FT_GlyphSlot glyph, 
 
 	for(j=0; j<glyph->bitmap.rows; j++) {
 		for(i=0; i<glyph->bitmap.width; i++) {
-			dest[i] = 0x00ffffff | ((unsigned int)src[i] << 24);
+			dest[i * 4] = 0xff;
+			dest[i * 4 + 1] = 0xff;
+			dest[i * 4 + 2] = 0xff;
+			dest[i * 4 + 3] = src[i];
 		}
-		dest += xsz;
+		dest += xsz * 4;
 		src += glyph->bitmap.pitch;
 	}
 }
