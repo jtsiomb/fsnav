@@ -1,8 +1,7 @@
 fsnav
 =====
 
-#![shot1](http://nuclear.mutantstargoat.com/sw/misc/fsnav1_thumb.png)
-#![shot2](http://nuclear.mutantstargoat.com/sw/misc/fsnav2_thumb.png)
+#![shot1](http://nuclear.mutantstargoat.com/sw/misc/fsnav1_thumb.png) #![shot2](http://nuclear.mutantstargoat.com/sw/misc/fsnav2_thumb.png)
 
 About
 -----
