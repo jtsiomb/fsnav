@@ -13,8 +13,8 @@ endif
 
 CC = gcc
 CXX = g++
-CFLAGS = -pedantic -Wall -g -O3 $(inc) $(def) -DPREFIX=\"$(PREFIX)\" `pkg-config --cflags freetype2`
-CXXFLAGS = -pedantic -Wall -g -O3 $(inc) $(def) -DPREFIX=\"$(PREFIX)\"
+CFLAGS = -pedantic -Wall -g -O3 $(inc) $(def) -fcommon -DPREFIX=\"$(PREFIX)\" `pkg-config --cflags freetype2`
+CXXFLAGS = -pedantic -Wall -g -O3 $(inc) $(def) -fcommon -DPREFIX=\"$(PREFIX)\"
 LDFLAGS = $(libgl_$(shell uname -s)) `pkg-config --libs freetype2` -lpng -ljpeg -lm
 
 libgl_UNIX = -lGL -lGLU -lglut
