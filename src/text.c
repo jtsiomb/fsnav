@@ -469,7 +469,7 @@ static void blit_font_glyph(struct font *fnt, int x, int y, FT_GlyphSlot glyph, 
 		return;
 	}
 
-	dest = img + y * xsz + x;
+	dest = (unsigned char*)(img + y * xsz + x);
 	src = glyph->bitmap.buffer;
 
 	for(j=0; j<glyph->bitmap.rows; j++) {

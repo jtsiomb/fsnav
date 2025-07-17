@@ -9,6 +9,7 @@ BSD license. See COPYING for more details.
 /* png support */
 #include "image.h"
 #include <stdio.h>
+#include <string.h>
 
 #ifdef IMGLIB_USE_PNG
 
@@ -35,7 +36,7 @@ void *load_png(FILE *fp, int *xsz, int *ysz)
 	int i;
 	uint32_t **lineptr, *pixels;
 	int channel_bits, color_type, ilace_type, compression, filtering;
-	unsigned long img_x, img_y;
+	png_uint_32 img_x, img_y;
 	
 	if(!(png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0))) {
 		return 0;
