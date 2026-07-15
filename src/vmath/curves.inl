@@ -23,7 +23,11 @@ static inline float curve_eval(curve_t *c, float t)
 static inline vec3_t curve_eval3(curve_t *c, float t)
 {
 	vec4_t res = c->eval(c, t);
-	return *(vec3_t*)&res;
+	vec3_t v3;
+	v3.x = res.x;
+	v3.y = res.y;
+	v3.z = res.z;
+	return v3;
 }
 
 static inline vec4_t curve_eval4(curve_t *c, float t)
