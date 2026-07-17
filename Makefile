@@ -11,10 +11,12 @@ ifeq ($(shell uname -s), CYGWIN_NT-5.1)
 	inc += -I/usr/include/opengl
 endif
 
+opt = -O3 -fno-strict-aliasing
+
 CC = gcc
 CXX = g++
-CFLAGS = -pedantic -Wall -g -O3 $(inc) $(def) -fcommon -DPREFIX=\"$(PREFIX)\" `pkg-config --cflags freetype2`
-CXXFLAGS = -pedantic -Wall -g -O3 $(inc) $(def) -fcommon -DPREFIX=\"$(PREFIX)\"
+CFLAGS = -pedantic -Wall -g $(opt) $(inc) $(def) -fcommon -DPREFIX=\"$(PREFIX)\" `pkg-config --cflags freetype2`
+CXXFLAGS = -pedantic -Wall -g $(opt) $(inc) $(def) -fcommon -DPREFIX=\"$(PREFIX)\"
 LDFLAGS = $(libgl_$(shell uname -s)) `pkg-config --libs freetype2` -lpng -ljpeg -lm
 
 libgl_UNIX = -lGL -lGLU -lglut
