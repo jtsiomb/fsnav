@@ -22,8 +22,11 @@ static inline vec3_t sphrand(scalar_t rad)
 	return res;
 }
 
+
+#if !defined(__cplusplus) || (__cplusplus < 202002L)
 /** linear interpolation */
 static inline scalar_t lerp(scalar_t a, scalar_t b, scalar_t t)
 {
 	return a + (b - a) * t;
 }
+#endif
