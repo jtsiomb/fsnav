@@ -44,8 +44,6 @@ static inline vec3_t sphrand(scalar_t rad);
 scalar_t integral(scalar_t (*f)(scalar_t), scalar_t low, scalar_t high, int samples);
 scalar_t gaussian(scalar_t x, scalar_t mean, scalar_t sdev);
 
-static inline scalar_t lerp(scalar_t a, scalar_t b, scalar_t t);
-
 scalar_t bspline(scalar_t a, scalar_t b, scalar_t c, scalar_t d, scalar_t t);
 scalar_t catmull_rom_spline(scalar_t a, scalar_t b, scalar_t c, scalar_t d, scalar_t t);
 scalar_t bezier(scalar_t a, scalar_t b, scalar_t c, scalar_t d, scalar_t t);

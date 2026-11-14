@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
+#include <cmath>
 #include "vmath.h"
 
 /** Numerical calculation of integrals using simpson's rule */

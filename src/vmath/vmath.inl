@@ -21,9 +21,3 @@ static inline vec3_t sphrand(scalar_t rad)
 	res.z = rad * cos(phi);
 	return res;
 }
-
-/** linear interpolation */
-static inline scalar_t lerp(scalar_t a, scalar_t b, scalar_t t)
-{
-	return a + (b - a) * t;
-}
